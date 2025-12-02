@@ -6,6 +6,9 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d.hpp>
 
+#include<arpa/inet.h>
+#include<unistd.h>
+
 #include "chad_mod.h"
 
 int main() {
@@ -52,11 +55,11 @@ int main() {
     cv::Mat frame, frame0, gray0;
     std::vector<cv::KeyPoint> kp0;
     cv::Mat des0;
-    std::vector<uint8_t> Rchan0;
+    std::vector<float> Rchan0;
 
     std::vector<cv::KeyPoint> kp2;
     cv::Mat des2, gray2;
-    std::vector<uint8_t> Rchan2;
+    std::vector<float> Rchan2;
 
     bool ref_set = false;
     float Xf = 0.0f, Yf = 0.0f, Zf = 0.0f;
@@ -103,7 +106,7 @@ int main() {
             p.nb_kp_ref = d.nb_kp_ref;
             p.nb_kp_cur = d.nb_kp_cur;
             p.nb_good = d.nb_good;
-            sendto(udp_sock, &p, sizeof(Packet), 0, (sockaddr*)&addr, sizeof(addr));
+            //sendto(udp_sock, &p, sizeof(Packet), 0, (sockaddr*)&addr, sizeof(addr));
 
             int cy = frame.cols / 2;
             int cz = frame.rows / 2;

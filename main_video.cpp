@@ -6,11 +6,14 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d.hpp>
 
+#include<arpa/inet.h>
+#include<unistd.h>
+
 #include "chad_mod.h"
 #include "packet.h"
 
 int main() {
-    std::string video_path = "video_robuste.mkv";
+    std::string video_path = "12.mkv";
     cv::VideoCapture cap(video_path);
     if (!cap.isOpened()) {
         std::cout << "Impossible d'ouvrir la video" << std::endl;
@@ -25,31 +28,36 @@ int main() {
     float KPY = 1;
     float KIY = 1;
     float KDY = 1;
+    float KPZ = 1;
+    float KIZ = 1;
+    float KDZ = 1;
     bool pid_x_enabled = true;
     bool pid_y_enabled = true;
+    bool pid_z_enabled = true;
 
     int udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in addr;
     addr.sin_family = AF_INET;                                                          //IPV4
     addr.sin_port = htons(9000);                                                        //Port de destination
-    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);                               //Adresse IP
-    
+    inet_pton(AF_INET, "10.182.245.67", &addr.sin_addr);                               //Adresse IP
+
     double fps = cap.get(cv::CAP_PROP_FPS);
 
     if (fps <= 0.0 || fps > 170.0)
         fps = 30.0;
     double frame_period_ms = 1000.0 / fps;
 
-    Tracker tracker(1.6f, 10, 0.02f, 1000, 3, 15);
+    Tracker tracker(1.6f, 10, 0.02f, 1000, 3, 15
+    );
 
     cv::Mat frame, frame0, gray0;
     std::vector<cv::KeyPoint> kp0;
     cv::Mat des0;
-    std::vector<uint8_t> Rchan0;
+    std::vector<float> Rchan0;
 
     std::vector<cv::KeyPoint> kp2;
     cv::Mat des2, gray2;
-    std::vector<uint8_t> Rchan2;
+    std::vector<float> Rchan2;
 
     bool ref_set = false;
     float Xf = 0.0f, Yf = 0.0f, Zf = 0.0f;
@@ -90,12 +98,16 @@ int main() {
             p.KPY = KPY;
             p.KIY = KIY;
             p.KDY = KDY;
+            p.KPZ = KPZ;
+            p.KIZ = KIZ;
+            p.KDZ = KDZ;
             p.X = X;
             p.Y = Y;
             p.Z = Z;
             p.pid_x_enabled = pid_x_enabled;
             p.pid_y_enabled = pid_y_enabled;
-            sendto(udp_sock, &p, sizeof(Packet), 0, (sockaddr*)&addr, sizeof(addr));
+            p.pid_z_enabled = pid_z_enabled;
+            //sendto(udp_sock, &p, sizeof(Packet), 0, (sockaddr*)&addr, sizeof(addr));
 
             int cy = frame.cols / 2;
             int cz = frame.rows / 2;
@@ -123,7 +135,7 @@ int main() {
                         info,
                         cv::Point(10, 50),
                         cv::FONT_HERSHEY_SIMPLEX,
-                        0.6,
+                        1,
                         cv::Scalar(0, 0, 255),
                         2);
         }

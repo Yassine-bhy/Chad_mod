@@ -27,17 +27,17 @@ public:
                           std::vector<cv::KeyPoint>& kp,
                           cv::Mat& des,
                           cv::Mat& gray,
-                          std::vector<uint8_t>& Rchan);
+                          std::vector<float>& Rchan);
 
     Displacement computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
                                      const cv::Mat& des1,
                                      const cv::Mat& img1,
-                                     const std::vector<uint8_t>& Rchan1,
+                                     const std::vector<float>& Rchan1,
                                      cv::Mat& img2,
                                      std::vector<cv::KeyPoint>& kp2,
                                      cv::Mat& des2,
                                      cv::Mat& gray2,
-                                     std::vector<uint8_t>& Rchan2,
+                                     std::vector<float>& Rchan2,
                                      std::vector<float>& rapports);
 
 private:
@@ -57,12 +57,12 @@ private:
                   std::vector<cv::KeyPoint>& kp,
                   cv::Mat& des,
                   cv::Mat& gray,
-                  std::vector<uint8_t>& Rchan);
+                  std::vector<float>& Rchan);
 
     void matches(const cv::Mat& img1, const cv::Mat& des1,
-                 const std::vector<cv::KeyPoint>& kp1, const std::vector<uint8_t>& Rchan1,
+                 const std::vector<cv::KeyPoint>& kp1, const std::vector<float>& Rchan1,
                  const cv::Mat& img2, const cv::Mat& des2,
-                 const std::vector<cv::KeyPoint>& kp2, const std::vector<uint8_t>& Rchan2,
+                 const std::vector<cv::KeyPoint>& kp2, const std::vector<float>& Rchan2,
                  std::vector<std::vector<cv::DMatch>>& good,
                  double test_unicite,
                  std::vector<float>& rapports);

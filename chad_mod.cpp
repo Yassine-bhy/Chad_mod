@@ -41,7 +41,7 @@ void Tracker::kp_image(cv::Mat& img,
                        std::vector<cv::KeyPoint>& kp,
                        cv::Mat& des,
                        cv::Mat& gray,
-                       std::vector<uint8_t>& Rchan)
+                       std::vector<float>& Rchan)
 {
     cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
 
@@ -49,9 +49,13 @@ void Tracker::kp_image(cv::Mat& img,
 
     for (int y = 0; y < img.rows; ++y) {
         const cv::Vec3b* row = img.ptr<cv::Vec3b>(y);
-        uint8_t* rrow = &Rchan[y * img.cols];
+        const uint8_t* grayrow = gray.ptr<uint8_t>(y);
         for (int x = 0; x < img.cols; ++x) {
-            rrow[x] = row[x][2]; // canal rouge
+            float R = row[x][2];
+            float GY = grayrow[x];
+
+            if (GY < 1.0f) GY = 1.0f;
+            Rchan[y * img.cols + x] = R / GY;
         }
     }
 
@@ -59,9 +63,9 @@ void Tracker::kp_image(cv::Mat& img,
 }
 
 void Tracker::matches(const cv::Mat& img1, const cv::Mat& des1,
-                      const std::vector<cv::KeyPoint>& kp1, const std::vector<uint8_t>& Rchan1,
+                      const std::vector<cv::KeyPoint>& kp1, const std::vector<float>& Rchan1,
                       const cv::Mat& img2, const cv::Mat& des2,
-                      const std::vector<cv::KeyPoint>& kp2, const std::vector<uint8_t>& Rchan2,
+                      const std::vector<cv::KeyPoint>& kp2, const std::vector<float>& Rchan2,
                       std::vector<std::vector<cv::DMatch>>& good,
                       double test_unicite,
                       std::vector<float>& rapports)
@@ -87,7 +91,7 @@ void Tracker::computeReference(cv::Mat& img,
                                std::vector<cv::KeyPoint>& kp,
                                cv::Mat& des,
                                cv::Mat& gray,
-                               std::vector<uint8_t>& Rchan)
+                               std::vector<float>& Rchan)
 {
     kp_image(img, kp, des, gray, Rchan);
 }
@@ -95,12 +99,12 @@ void Tracker::computeReference(cv::Mat& img,
 Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
                                           const cv::Mat& des1,
                                           const cv::Mat& img1,
-                                          const std::vector<uint8_t>& Rchan1,
+                                          const std::vector<float>& Rchan1,
                                           cv::Mat& img2,
                                           std::vector<cv::KeyPoint>& kp2,
                                           cv::Mat& des2,
                                           cv::Mat& gray2,
-                                          std::vector<uint8_t>& Rchan2,
+                                          std::vector<float>& Rchan2,
                                           std::vector<float>& rapports)
 {
     std::vector<std::vector<cv::DMatch>> good;
