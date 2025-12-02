@@ -13,7 +13,7 @@
 #include "packet.h"
 
 int main() {
-    std::string video_path = "12.mkv";
+    std::string video_path = "/home/mig/MIG2025/17.mkv";
     cv::VideoCapture cap(video_path);
     if (!cap.isOpened()) {
         std::cout << "Impossible d'ouvrir la video" << std::endl;
@@ -38,7 +38,7 @@ int main() {
     int udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in addr;
     addr.sin_family = AF_INET;                                                          //IPV4
-    addr.sin_port = htons(9000);                                                        //Port de destination
+    addr.sin_port = htons(6969);                                                        //Port de destination
     inet_pton(AF_INET, "10.182.245.67", &addr.sin_addr);                               //Adresse IP
 
     double fps = cap.get(cv::CAP_PROP_FPS);
@@ -47,8 +47,7 @@ int main() {
         fps = 30.0;
     double frame_period_ms = 1000.0 / fps;
 
-    Tracker tracker(1.6f, 10, 0.02f, 1000, 3, 15
-    );
+    Tracker tracker(1.6f, 10, 0.02f, 1000, 3, 10);
 
     cv::Mat frame, frame0, gray0;
     std::vector<cv::KeyPoint> kp0;
@@ -107,7 +106,7 @@ int main() {
             p.pid_x_enabled = pid_x_enabled;
             p.pid_y_enabled = pid_y_enabled;
             p.pid_z_enabled = pid_z_enabled;
-            //sendto(udp_sock, &p, sizeof(Packet), 0, (sockaddr*)&addr, sizeof(addr));
+            sendto(udp_sock, &p, sizeof(Packet), 0, (sockaddr*)&addr, sizeof(addr));
 
             int cy = frame.cols / 2;
             int cz = frame.rows / 2;

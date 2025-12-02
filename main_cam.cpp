@@ -32,8 +32,8 @@ int main() {
     int udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in addr;
     addr.sin_family = AF_INET;                                                          //IPV4
-    addr.sin_port = htons(9000);                                                        //Port de destination
-    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);                               //Adresse IP
+    addr.sin_port = htons(6969);                                                        //Port de destination
+    inet_pton(AF_INET, "10.182.245.67", &addr.sin_addr);                             //Adresse IP
     struct Packet { float KPX;
                     float KIX;
                     float KDX;

@@ -49,13 +49,9 @@ void Tracker::kp_image(cv::Mat& img,
 
     for (int y = 0; y < img.rows; ++y) {
         const cv::Vec3b* row = img.ptr<cv::Vec3b>(y);
-        const uint8_t* grayrow = gray.ptr<uint8_t>(y);
         for (int x = 0; x < img.cols; ++x) {
             float R = row[x][2];
-            float GY = grayrow[x];
-
-            if (GY < 1.0f) GY = 1.0f;
-            Rchan[y * img.cols + x] = R / GY;
+            Rchan[y * img.cols + x] = R;
         }
     }
 
