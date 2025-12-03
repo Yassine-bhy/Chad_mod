@@ -22,6 +22,7 @@ int main() {
 
     float resize_factor = 0.5f;
 
+    // Variables du PID
     float KPX = 1;
     float KIX = 1;
     float KDX = 1;
@@ -35,6 +36,7 @@ int main() {
     bool pid_y_enabled = true;
     bool pid_z_enabled = true;
 
+    // Création du socket pour l'envoie
     int udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in addr;
     addr.sin_family = AF_INET;                                                          //IPV4
@@ -71,10 +73,12 @@ int main() {
         if (!ret || frame.empty())
             break;
 
+        // resize pour gagner en rapidité
         cv::Mat frame_small;
         cv::resize(frame, frame_small, cv::Size(), resize_factor, resize_factor);
 
         if (ref_set) {
+            // calcul du déplacement
             Displacement d = tracker.computeDisplacement(
                 kp0, des0, frame0, Rchan0,
                 frame_small, kp2, des2, gray2, Rchan2,
@@ -111,6 +115,7 @@ int main() {
             int cy = frame.cols / 2;
             int cz = frame.rows / 2;
 
+            // dessin de la flèche sur la frame
             cv::arrowedLine(frame,
                             cv::Point(cy, cz),
                             cv::Point(cy + static_cast<int>(Yf),
@@ -121,6 +126,7 @@ int main() {
                             0,
                             0.2);
 
+            // écriture des informations sur la frame
             std::string mouvement = (Xf > 0.0f) ? "avance" : "recule";
 
             std::string info = "dx=" + std::to_string(Xf) + " (" + mouvement + ")" +
@@ -139,6 +145,7 @@ int main() {
                         2);
         }
 
+        // affichage de la frame
         cv::imshow("SIFT Poursuite", frame);
 
         double t1 = cv::getTickCount();
@@ -152,6 +159,7 @@ int main() {
             delay = 1;
         }
 
+        // 'r' prend une nouvelle référence et 'q' termine le programme        
         char key = static_cast<char>(cv::waitKey(delay));
         if (key == 'q')
             break;
