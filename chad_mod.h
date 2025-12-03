@@ -17,7 +17,7 @@ struct Displacement {
 class Tracker {
 public:
     Tracker(float sig = 1.6f,
-            int edge = 10,
+            int edge = 12,
             float contrast = 0.02f,
             int nfeat = 1000, 
             int nLay = 3,
