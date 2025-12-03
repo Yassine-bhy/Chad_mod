@@ -52,7 +52,7 @@ int main() {
                     int nb_good;
             };
 
-    Tracker tracker(1.6f, 10, 0.02f, 1000, 3, 15);
+    Tracker tracker(1.6f, 12, 0.02f, 1000, 3, 15);
 
     cv::Mat frame, frame0, gray0;
     std::vector<cv::KeyPoint> kp0;
