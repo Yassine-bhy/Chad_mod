@@ -10,14 +10,18 @@
 #include<unistd.h>
 
 #include "chad_mod.h"
+#include "packet.h"
 
 int main() {
-    cap = cv.VideoCapture(0, cv.CAP_DSHOW)
+    std::string URL = "http://192.168.2.2/mavlink-camera-manager/sdp?source=%2Fdev%2Fvideo2";
+    URL = "udp://192.168.2.2:5600";
+    cv::VideoCapture cap(URL);
     if (!cap.isOpened()) {
         std::cout << "Impossible d'ouvrir la video" << std::endl;
         return -1;
     }
 
+    // Facteur de redimensionnement de l'image
     float resize_factor = 0.5f;
 
     // Variables du PID
@@ -27,8 +31,12 @@ int main() {
     float KPY = 1;
     float KIY = 1;
     float KDY = 1;
+    float KPZ = 1;
+    float KIZ = 1;
+    float KDZ = 1;
     bool pid_x_enabled = true;
     bool pid_y_enabled = true;
+    bool pid_z_enabled = true;
 
     // Création du socket pour l'envoie
     int udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -36,23 +44,10 @@ int main() {
     addr.sin_family = AF_INET;                                                          //IPV4
     addr.sin_port = htons(6969);                                                        //Port de destination
     inet_pton(AF_INET, "10.182.245.67", &addr.sin_addr);                             //Adresse IP
-    struct Packet { float KPX;
-                    float KIX;
-                    float KDX;
-                    float KPY;
-                    float KIY;
-                    float KDY;
-                    float X;
-                    float Y;
-                    float Z;
-                    bool pid_x_enabled = true;
-                    bool pid_y_enabled = true;
-                    int nb_kp_ref;
-                    int nb_kp_cur;
-                    int nb_good;
-            };
 
-    Tracker tracker(1.6f, 12, 0.02f, 1000, 3, 15);
+
+    // Tracker : gère SIFT + matching + calcul du déplacement
+    Tracker tracker(1.6f, 12, 0.02f, 1000, 3, 10);
 
     cv::Mat frame, frame0, gray0;
     std::vector<cv::KeyPoint> kp0;
@@ -66,6 +61,7 @@ int main() {
     bool ref_set = false;
     float Xf = 0.0f, Yf = 0.0f, Zf = 0.0f;
     float alpha = 0.2f;
+
 
     std::vector<float> rapports;
 
@@ -95,7 +91,7 @@ int main() {
             Yf = alpha * Y + (1.0f - alpha) * Yf;
             Zf = alpha * Z + (1.0f - alpha) * Zf;
 
-            // Envoie UDP
+            // Préparation du paquet à envoyer au robot
             Packet p;
             p.KPX = KPX;
             p.KIX = KIX;
@@ -103,15 +99,19 @@ int main() {
             p.KPY = KPY;
             p.KIY = KIY;
             p.KDY = KDY;
+            p.KPZ = KPZ;
+            p.KIZ = KIZ;
+            p.KDZ = KDZ;
             p.X = X;
             p.Y = Y;
             p.Z = Z;
             p.pid_x_enabled = pid_x_enabled;
             p.pid_y_enabled = pid_y_enabled;
-            p.nb_kp_ref = d.nb_kp_ref;
-            p.nb_kp_cur = d.nb_kp_cur;
-            p.nb_good = d.nb_good;
+            p.pid_z_enabled = pid_z_enabled;
+
+            // Envoi UDP des données de correction
             sendto(udp_sock, &p, sizeof(Packet), 0, (sockaddr*)&addr, sizeof(addr));
+
 
             int cy = frame.cols / 2;
             int cz = frame.rows / 2;
@@ -150,7 +150,7 @@ int main() {
         cv::imshow("SIFT Poursuite", frame);
 
         // 'r' prend une nouvelle référence et 'q' termine le programme
-        char key = static_cast<char>(cv::waitKey(delay));
+        char key = static_cast<char>(cv::waitKey(1));
         if (key == 'q')
             break;
 
