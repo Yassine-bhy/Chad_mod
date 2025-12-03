@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+
+// Constructeur : initialise paramètres SIFT + BFMatcher
 Tracker::Tracker(float sig,
                  int edge,
                  float contrast,
@@ -26,7 +28,8 @@ Tracker::Tracker(float sig,
     );
 }
 
-//_________ CALCUL DE MEDIANNE ______________
+
+// Calcule la médiane d’un vecteur
 float Tracker::median(std::vector<float>& v) {
     if (v.empty())
         return 0.0f;
@@ -38,7 +41,8 @@ float Tracker::median(std::vector<float>& v) {
     return 0.5f * (v[n/2 - 1] + v[n/2]);
 }
 
-//__________ TRAITEMENT D'UNE IMAGE ____________ Passage en gris, récupération du canal rouge et SIFT
+
+// Convertit en gris + extrait canal rouge + calcule SIFT
 void Tracker::kp_image(cv::Mat& img,
                        std::vector<cv::KeyPoint>& kp,
                        cv::Mat& des,
@@ -60,7 +64,8 @@ void Tracker::kp_image(cv::Mat& img,
     sift_->detectAndCompute(gray, cv::noArray(), kp, des);
 }
 
-//_______________ MATCHING __________ 
+
+// Matching SIFT + filtrage par ratio test
 void Tracker::matches(const cv::Mat& img1, const cv::Mat& des1,
                       const std::vector<cv::KeyPoint>& kp1, const std::vector<float>& Rchan1,
                       const cv::Mat& img2, const cv::Mat& des2,
@@ -87,7 +92,8 @@ void Tracker::matches(const cv::Mat& img1, const cv::Mat& des1,
     }
 }
 
-//traitement de l'image de référence
+
+// Calcule SIFT + rouge sur l'image de référence
 void Tracker::computeReference(cv::Mat& img,
                                std::vector<cv::KeyPoint>& kp,
                                cv::Mat& des,
@@ -97,7 +103,8 @@ void Tracker::computeReference(cv::Mat& img,
     kp_image(img, kp, des, gray, Rchan);
 }
 
-//__________ CALCUL DU DEPLACEMENT _____________
+
+// Déplacement global entre image référence et courante
 Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
                                           const cv::Mat& des1,
                                           const cv::Mat& img1,
@@ -181,9 +188,7 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
             float median_patch1 = median(patch_reds1);
             float median_patch2 = median(patch_reds2);
 
-            if (median_patch2 > 0.0f) {
-                rapports.push_back(median_patch1 - median_patch2);
-            }
+            rapports.push_back(median_patch1 - median_patch2);
         }
     }
 
@@ -192,9 +197,9 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
     }
 
     // valeur du  déplacement
-    disp.X = median(rapports);
-    disp.Y = median(dy_values);
-    disp.Z = median(dz_values);
+    disp.X = median(rapports);           // avance/recul via rouge
+    disp.Y = median(dy_values);          // déplacement horizontal
+    disp.Z = median(dz_values);          // déplacement vertical
 
     return disp;
 }

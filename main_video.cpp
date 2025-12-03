@@ -13,13 +13,20 @@
 #include "packet.h"
 
 int main() {
+
+    // Chemin de la vidéo à traiter
     std::string video_path = "/home/mig/MIG2025/17.mkv";
+
+
     cv::VideoCapture cap(video_path);
     if (!cap.isOpened()) {
         std::cout << "Impossible d'ouvrir la video" << std::endl;
         return -1;
     }
 
+
+
+    // Facteur de redimensionnement de l'image
     float resize_factor = 0.5f;
 
     // Variables du PID
@@ -36,20 +43,25 @@ int main() {
     bool pid_y_enabled = true;
     bool pid_z_enabled = true;
 
-    // Création du socket pour l'envoie
+    
+    // Création du socket UDP pour l'envoi des corrections au robot
     int udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in addr;
     addr.sin_family = AF_INET;                                                          //IPV4
     addr.sin_port = htons(6969);                                                        //Port de destination
     inet_pton(AF_INET, "10.182.245.67", &addr.sin_addr);                               //Adresse IP
 
+
+    // Récupération des FPS de la vidéo (pour respecter la vitesse originale)
     double fps = cap.get(cv::CAP_PROP_FPS);
 
     if (fps <= 0.0 || fps > 170.0)
         fps = 30.0;
     double frame_period_ms = 1000.0 / fps;
 
-    Tracker tracker(1.6f, 10, 0.02f, 1000, 3, 10);
+
+    // Tracker : gère SIFT + matching + calcul du déplacement
+    Tracker tracker(1.6f, 12, 0.02f, 1000, 3, 10);
 
     cv::Mat frame, frame0, gray0;
     std::vector<cv::KeyPoint> kp0;
@@ -93,7 +105,7 @@ int main() {
             Yf = alpha * Y + (1.0f - alpha) * Yf;
             Zf = alpha * Z + (1.0f - alpha) * Zf;
 
-            // Envoie UDP
+            // Préparation du paquet à envoyer au robot
             Packet p;
             p.KPX = KPX;
             p.KIX = KIX;
@@ -110,6 +122,8 @@ int main() {
             p.pid_x_enabled = pid_x_enabled;
             p.pid_y_enabled = pid_y_enabled;
             p.pid_z_enabled = pid_z_enabled;
+
+            // Envoi UDP des données de correction
             sendto(udp_sock, &p, sizeof(Packet), 0, (sockaddr*)&addr, sizeof(addr));
 
             int cy = frame.cols / 2;
