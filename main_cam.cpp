@@ -12,7 +12,18 @@
 #include "chad_mod.h"
 
 int main() {
-    cap = cv.VideoCapture(0, cv.CAP_DSHOW)
+    std::string input_pipeline = "udpsrc port=5600 ! "
+                                 "application/x-rtp, payload=96 ! "
+                                 "rtph264depay ! h264parse ! avdec_h264 ! "
+                                 "videoconvert ! appsink sync=false";
+
+    // OUTPUT: Send processed video to MediaMTX (so it shows in Cockpit)
+    // NOTE: '192.168.2.2' is the BlueOS IP. 
+    std::string output_url = "rtsp://192.168.2.2:8554/processed_video";
+    std::string writer_pipeline = "appsrc ! videoconvert ! x264enc tune=zerolatency bitrate=2000 speed-preset=ultrafast ! rtspclientsink location=" + output_url;
+
+    // Open Input
+    cv::VideoCapture cap(input_pipeline, cv::CAP_GSTREAMER);
     if (!cap.isOpened()) {
         std::cout << "Impossible d'ouvrir la video" << std::endl;
         return -1;
