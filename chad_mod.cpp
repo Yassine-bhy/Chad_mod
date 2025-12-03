@@ -71,16 +71,13 @@ void Tracker::matches(const cv::Mat& img1, const cv::Mat& des1,
                       const cv::Mat& img2, const cv::Mat& des2,
                       const std::vector<cv::KeyPoint>& kp2, const std::vector<float>& Rchan2,
                       std::vector<std::vector<cv::DMatch>>& good,
-                      double test_unicite,
-                      std::vector<float>& rapports)
+                      double test_unicite)
 {
     std::vector<std::vector<cv::DMatch>> knn_matches;
     bf_.knnMatch(des1, des2, knn_matches, 2);
 
     // filtrage d'unicité
     good.clear();
-    rapports.clear();
-    rapports.reserve(knn_matches.size());
 
     for (auto& pair : knn_matches) {
         if (pair.size() < 2) continue;
@@ -122,7 +119,7 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
 
     matches(img1, des1, kp1, Rchan1,
             img2, des2, kp2, Rchan2,
-            good, 0.75, rapports);
+            good, 0.75);
 
     Displacement disp{};
     disp.X = 0.0f;
@@ -138,8 +135,10 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
     }
 
     std::vector<float> dy_values, dz_values;
+    rapports.clear();
     dy_values.reserve(good.size());
     dz_values.reserve(good.size());
+    rapports.reserve(good.size());
 
     int half_patch = patch_size_ / 2;
     std::vector<float> patch_reds1;

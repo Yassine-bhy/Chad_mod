@@ -78,6 +78,5 @@ private:
                  const cv::Mat& img2, const cv::Mat& des2,
                  const std::vector<cv::KeyPoint>& kp2, const std::vector<float>& Rchan2,
                  std::vector<std::vector<cv::DMatch>>& good,
-                 double test_unicite,
-                 std::vector<float>& rapports);
+                 double test_unicite);
 };
