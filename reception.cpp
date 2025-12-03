@@ -25,7 +25,7 @@ int main() {
     std::cout << "Serveur UDP en écoute sur le port 6969...\n";
 
     while (true) {
-        float buffer[20]; // exemple : 10 floats max par paquet
+        float buffer[20]; // exemple : 20 floats max par paquet
         sockaddr_in sender_addr;
         socklen_t sender_len = sizeof(sender_addr);
 
