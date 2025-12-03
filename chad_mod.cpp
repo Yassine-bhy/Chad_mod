@@ -181,8 +181,7 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
             float median_patch1 = median(patch_reds1);
             float median_patch2 = median(patch_reds2);
 
-            if (median_patch2 > 0.0f) {
-                rapports.push_back(median_patch1 - median_patch2);
+            rapports.push_back(median_patch1 - median_patch2);
             }
         }
     }
