@@ -26,6 +26,7 @@ Tracker::Tracker(float sig,
     );
 }
 
+//_________ CALCUL DE MEDIANNE ______________
 float Tracker::median(std::vector<float>& v) {
     if (v.empty())
         return 0.0f;
@@ -37,6 +38,7 @@ float Tracker::median(std::vector<float>& v) {
     return 0.5f * (v[n/2 - 1] + v[n/2]);
 }
 
+//__________ TRAITEMENT D'UNE IMAGE ____________ Passage en gris, récupération du canal rouge et SIFT
 void Tracker::kp_image(cv::Mat& img,
                        std::vector<cv::KeyPoint>& kp,
                        cv::Mat& des,
@@ -58,6 +60,7 @@ void Tracker::kp_image(cv::Mat& img,
     sift_->detectAndCompute(gray, cv::noArray(), kp, des);
 }
 
+//_______________ MATCHING __________ 
 void Tracker::matches(const cv::Mat& img1, const cv::Mat& des1,
                       const std::vector<cv::KeyPoint>& kp1, const std::vector<float>& Rchan1,
                       const cv::Mat& img2, const cv::Mat& des2,
@@ -69,6 +72,7 @@ void Tracker::matches(const cv::Mat& img1, const cv::Mat& des1,
     std::vector<std::vector<cv::DMatch>> knn_matches;
     bf_.knnMatch(des1, des2, knn_matches, 2);
 
+    // filtrage d'unicité
     good.clear();
     rapports.clear();
     rapports.reserve(knn_matches.size());
@@ -83,6 +87,7 @@ void Tracker::matches(const cv::Mat& img1, const cv::Mat& des1,
     }
 }
 
+//traitement de l'image de référence
 void Tracker::computeReference(cv::Mat& img,
                                std::vector<cv::KeyPoint>& kp,
                                cv::Mat& des,
@@ -92,6 +97,7 @@ void Tracker::computeReference(cv::Mat& img,
     kp_image(img, kp, des, gray, Rchan);
 }
 
+//__________ CALCUL DU DEPLACEMENT _____________
 Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
                                           const cv::Mat& des1,
                                           const cv::Mat& img1,
@@ -119,7 +125,7 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
     disp.nb_kp_cur = static_cast<int>(kp2.size());
     disp.nb_good   = static_cast<int>(good.size());
 
-
+    // si trop peu de match, on fait rien
     if (good.size() < 5) {
         return disp;
     }
@@ -141,12 +147,14 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
         float x2 = kp2[idx2].pt.x;
         float y2 = kp2[idx2].pt.y;
 
+        // déplacement en y et z pour chaque match
         dy_values.push_back(static_cast<float>(x2 - x1));
         dz_values.push_back(static_cast<float>(y2 - y1));
 
         patch_reds1.clear();
         patch_reds2.clear();
 
+        // niveau du rouge dans les patch autour du match
         for (int dy = -half_patch; dy <= half_patch; ++dy) {
             int yy1 = static_cast<int>(y1) + dy;
             if (yy1 < 0 || yy1 >= img1.rows) continue;
@@ -183,6 +191,7 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
         return disp;
     }
 
+    // valeur du  déplacement
     disp.X = median(rapports);
     disp.Y = median(dy_values);
     disp.Z = median(dz_values);
