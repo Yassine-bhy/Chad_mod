@@ -65,7 +65,7 @@ void Tracker::kp_image(cv::Mat& img,
 }
 
 
-// Matching SIFT + filtrage par ratio test
+// Matching SIFT + filtrage d'unicité
 void Tracker::matches(const cv::Mat& img1, const cv::Mat& des1,
                       const std::vector<cv::KeyPoint>& kp1, const std::vector<float>& Rchan1,
                       const cv::Mat& img2, const cv::Mat& des2,
