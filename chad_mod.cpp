@@ -111,7 +111,7 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
                                           cv::Mat& des2,
                                           cv::Mat& gray2,
                                           std::vector<float>& Rchan2,
-                                          std::vector<float>& rapports)
+                                          std::vector<float>& dx_values)
 {
     std::vector<std::vector<cv::DMatch>> good;
 
@@ -133,12 +133,12 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
     if (good.size() < 5) {
         return disp;
     }
-
+    
     std::vector<float> dy_values, dz_values;
-    rapports.clear();
+    dx_values.clear();
+    dx_values.reserve(good.size());
     dy_values.reserve(good.size());
     dz_values.reserve(good.size());
-    rapports.reserve(good.size());
 
     int half_patch = patch_size_ / 2;
     std::vector<float> patch_reds1;
@@ -187,16 +187,16 @@ Displacement Tracker::computeDisplacement(const std::vector<cv::KeyPoint>& kp1,
             float median_patch1 = median(patch_reds1);
             float median_patch2 = median(patch_reds2);
 
-            rapports.push_back(median_patch1 - median_patch2);
+            dx_values.push_back(median_patch1 - median_patch2);
         }
     }
 
-    if (dy_values.empty() || dz_values.empty() || rapports.empty()) {
+    if (dy_values.empty() || dz_values.empty() || dx_values.empty()) {
         return disp;
     }
 
     // valeur du  déplacement
-    disp.X = median(rapports);           // avance/recul via rouge
+    disp.X = median(dx_values);           // avance/recul via rouge
     disp.Y = median(dy_values);          // déplacement horizontal
     disp.Z = median(dz_values);          // déplacement vertical
 

@@ -46,7 +46,7 @@ public:
                                      cv::Mat& des2,
                                      cv::Mat& gray2,
                                      std::vector<float>& Rchan2,
-                                     std::vector<float>& rapports);
+                                     std::vector<float>& dx_values);
 
 private:
     float sig_;
