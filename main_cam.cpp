@@ -14,7 +14,7 @@
 
 int main() {
     std::string URL = "http://192.168.2.2/mavlink-camera-manager/sdp?source=%2Fdev%2Fvideo2";
-    URL = "udp://192.168.2.2:5600";
+    URL = "rtsp://192.168.2.1:8554/unicast";
     cv::VideoCapture cap(URL);
     if (!cap.isOpened()) {
         std::cout << "Impossible d'ouvrir la video" << std::endl;
