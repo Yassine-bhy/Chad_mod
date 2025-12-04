@@ -15,7 +15,7 @@
 int main() {
 
     // Chemin de la vidéo à traiter
-    std::string video_path = "/home/mig/MIG2025/13.mkv";
+    std::string video_path = "18.mkv";
 
 
     cv::VideoCapture cap(video_path);
@@ -61,7 +61,7 @@ int main() {
 
 
     // Tracker : gère SIFT + matching + calcul du déplacement
-    Tracker tracker(1.6f, 12, 0.02f, 1000, 3, 10);
+    Tracker tracker(1.6f, 12, 0.02f, 0, 3, 10);
 
     cv::Mat frame, frame0, gray0;
     std::vector<cv::KeyPoint> kp0;

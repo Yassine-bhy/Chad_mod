@@ -24,7 +24,7 @@ public:
     Tracker(float sig = 1.6f,
             int edge = 12,
             float contrast = 0.02f,
-            int nfeat = 1000, 
+            int nfeat = 0, 
             int nLay = 3,
             int patch_size = 15);
 
