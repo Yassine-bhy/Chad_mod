@@ -13,9 +13,18 @@
 #include "packet.h"
 
 int main() {
-    std::string URL = "http://192.168.2.2/mavlink-camera-manager/sdp?source=%2Fdev%2Fvideo2";
-    URL = "rtsp://192.168.2.1:8554/unicast";
-    cv::VideoCapture cap(URL);
+    std::string pipeline = 
+    "udpsrc port=5600 "
+    "buffer-size=0 "                    
+    "caps=\"application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264, payload=(int)96\" ! "
+    "rtph264depay ! "
+    "h264parse ! "
+    "avdec_h264 "
+    "output-corrupt=false "            
+    "! "
+    "videoconvert ! "
+    "appsink sync=false drop=true max-buffers=1"; 
+    cv::VideoCapture cap(pipeline, cv::CAP_GSTREAMER);
     if (!cap.isOpened()) {
         std::cout << "Impossible d'ouvrir la video" << std::endl;
         return -1;

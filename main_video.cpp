@@ -15,7 +15,7 @@
 int main() {
 
     // Chemin de la vidéo à traiter
-    std::string video_path = "/home/mig/MIG2025/17.mkv";
+    std::string video_path = "/home/mig/MIG2025/13.mkv";
 
 
     cv::VideoCapture cap(video_path);
