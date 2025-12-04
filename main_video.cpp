@@ -15,7 +15,7 @@
 int main() {
 
     // Chemin de la vidéo à traiter
-    std::string video_path = "/home/mig/MIG2025/17.mkv";
+    std::string video_path = "17.mkv";
 
 
     cv::VideoCapture cap(video_path);
@@ -49,7 +49,7 @@ int main() {
     sockaddr_in addr;
     addr.sin_family = AF_INET;                                                          //IPV4
     addr.sin_port = htons(6969);                                                        //Port de destination
-    inet_pton(AF_INET, "10.182.245.67", &addr.sin_addr);                               //Adresse IP
+    inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);                               //Adresse IP
 
 
     // Récupération des FPS de la vidéo (pour respecter la vitesse originale)
