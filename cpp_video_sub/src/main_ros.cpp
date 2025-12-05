@@ -2,34 +2,27 @@
 #include <vector>
 #include <cmath>
 #include <cstdint>
+#include <memory>
+
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <cv_bridge/cv_bridge.hpp>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d.hpp>
 
-#include<arpa/inet.h>
-#include<unistd.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 #include "chad_mod.h"
 #include "packet.h"
 
-int main() {
+int main(int argc, char * argv[]) {
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<rclcpp::Node>("bluerov_vision_node");
 
-    // Chemin de la vidéo à traiter
-    std::string video_path = "/home/mig/MIG2025/video_robuste.mkv";
+    float resize_factor = 0.5f;
 
-
-    cv::VideoCapture cap(video_path);
-    if (!cap.isOpened()) {
-        std::cout << "Impossible d'ouvrir la video" << std::endl;
-        return -1;
-    }
-
-
-
-    // Facteur de redimensionnement de l'image
-    float resize_factor = 0.25f;
-
-    // Variables du PID
     float KPX = 1;
     float KIX = 1;
     float KDX = 1;
@@ -43,27 +36,15 @@ int main() {
     bool pid_y_enabled = true;
     bool pid_z_enabled = true;
 
-    
-    // Création du socket UDP pour l'envoi des corrections au robot
     int udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
     sockaddr_in addr;
-    addr.sin_family = AF_INET;                                                          //IPV4
-    addr.sin_port = htons(6969);                                                        //Port de destination
-    inet_pton(AF_INET, "10.182.245.67", &addr.sin_addr);                               //Adresse IP
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(6969);
+    inet_pton(AF_INET, "10.182.245.67", &addr.sin_addr);
 
+    Tracker tracker(1.6f, 12, 0.02f, 0, 3, 10);
 
-    // Récupération des FPS de la vidéo (pour respecter la vitesse originale)
-    double fps = cap.get(cv::CAP_PROP_FPS);
-
-    if (fps <= 0.0 || fps > 170.0)
-        fps = 30.0;
-    double frame_period_ms = 1000.0 / fps;
-
-
-    // Tracker : gère SIFT + matching + calcul du déplacement
-    Tracker tracker(1.6f, 12, 0.02f, 3000, 3, 10);
-
-    cv::Mat frame, frame0, gray0;
+    cv::Mat frame0, gray0;
     std::vector<cv::KeyPoint> kp0;
     cv::Mat des0;
     std::vector<float> Rchan0;
@@ -78,19 +59,21 @@ int main() {
 
     std::vector<float> rapports;
 
-    while (true) {
-        double t0 = cv::getTickCount();
+    auto callback = [&](const sensor_msgs::msg::Image::SharedPtr msg) {
+        cv::Mat frame;
+        try {
+            frame = cv_bridge::toCvCopy(msg, "bgr8")->image;
+        } catch (cv_bridge::Exception& e) {
+            RCLCPP_ERROR(node->get_logger(), "cv_bridge exception: %s", e.what());
+            return;
+        }
 
-        bool ret = cap.read(frame);
-        if (!ret || frame.empty())
-            break;
+        if (frame.empty()) return;
 
-        // resize pour gagner en rapidité
         cv::Mat frame_small;
         cv::resize(frame, frame_small, cv::Size(), resize_factor, resize_factor);
 
         if (ref_set) {
-            // calcul du déplacement
             Displacement d = tracker.computeDisplacement(
                 kp0, des0, frame0, Rchan0,
                 frame_small, kp2, des2, gray2, Rchan2,
@@ -105,11 +88,10 @@ int main() {
             Yf = alpha * Y + (1.0f - alpha) * Yf;
             Zf = alpha * Z + (1.0f - alpha) * Zf;
 
-            // Préparation du paquet à envoyer au robot
             Packet p;
             p.KPX = KPX;
             p.KIX = KIX;
-            p.KDX = KDY;
+            p.KDX = KDX;
             p.KPY = KPY;
             p.KIY = KIY;
             p.KDY = KDY;
@@ -122,14 +104,15 @@ int main() {
             p.pid_x_enabled = pid_x_enabled;
             p.pid_y_enabled = pid_y_enabled;
             p.pid_z_enabled = pid_z_enabled;
+            p.nb_kp_ref = d.nb_kp_ref;
+            p.nb_kp_cur = d.nb_kp_cur;
+            p.nb_good = d.nb_good;
 
-            // Envoi UDP des données de correction
             sendto(udp_sock, &p, sizeof(Packet), 0, (sockaddr*)&addr, sizeof(addr));
 
             int cy = frame.cols / 2;
             int cz = frame.rows / 2;
 
-            // dessin de la flèche sur la frame
             cv::arrowedLine(frame,
                             cv::Point(cy, cz),
                             cv::Point(cy + static_cast<int>(Yf),
@@ -140,7 +123,6 @@ int main() {
                             0,
                             0.2);
 
-            // écriture des informations sur la frame
             std::string mouvement = (Xf > 0.0f) ? "avance" : "recule";
 
             std::string info = "dx=" + std::to_string(Xf) + " (" + mouvement + ")" +
@@ -154,29 +136,17 @@ int main() {
                         info,
                         cv::Point(10, 50),
                         cv::FONT_HERSHEY_SIMPLEX,
-                        1,
+                        0.6,
                         cv::Scalar(0, 0, 255),
                         2);
         }
 
-        // affichage de la frame
         cv::imshow("SIFT Poursuite", frame);
 
-        double t1 = cv::getTickCount();
-        double delta_T = (t1 - t0) * 1000.0 / cv::getTickFrequency();
-
-        int delay;
-        if (delta_T < frame_period_ms) {
-            delay = static_cast<int>(frame_period_ms - delta_T);
-            if (delay < 1) delay = 1;
-        } else {
-            delay = 1;
+        char key = static_cast<char>(cv::waitKey(1));
+        if (key == 'q') {
+            rclcpp::shutdown();
         }
-
-        // 'r' prend une nouvelle référence et 'q' termine le programme        
-        char key = static_cast<char>(cv::waitKey(delay));
-        if (key == 'q')
-            break;
 
         if (key == 'r') {
             frame0 = frame_small.clone();
@@ -184,9 +154,22 @@ int main() {
             ref_set = true;
             Xf = Yf = Zf = 0.0f;
         }
-    }
+    };
 
-    cap.release();
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(10)).best_effort();
+    
+    auto sub = node->create_subscription<sensor_msgs::msg::Image>(
+        "/bluerov/sensors/CamL/image_color", 
+        qos, 
+        callback
+    );
+
+    std::cout << "Waiting for ROS 2 images..." << std::endl;
+
+    rclcpp::spin(node);
+
+    close(udp_sock);
     cv::destroyAllWindows();
+    rclcpp::shutdown();
     return 0;
 }
